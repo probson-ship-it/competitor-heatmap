@@ -3,160 +3,276 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Competitor Account Heatmap</title>
+<title>Competitor Account Dot Map</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; overflow: hidden; }
+  html, body { height: 100%; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fff; color: #1a1a1a; padding: 0.75rem 1.25rem; display: flex; flex-direction: column; height: 100vh; }
-  h2 { font-size: 16px; font-weight: 500; margin-bottom: 0.1rem; }
-  #subtitle { font-size: 12px; color: #666; margin-bottom: 0.4rem; }
-  #count-label { font-size: 12px; color: #666; margin-bottom: 0.3rem; }
-  #legend { display: flex; align-items: center; gap: 8px; margin-bottom: 0.4rem; font-size: 11px; color: #555; flex-wrap: wrap; }
-  .leg-swatch { width: 13px; height: 13px; border-radius: 3px; display: inline-block; border: 0.5px solid rgba(0,0,0,0.1); }
-  svg path { cursor: pointer; transition: opacity 0.1s; }
-  svg path:hover { opacity: 0.7; }
-  svg text { pointer-events: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-  #tooltip {
-    position: fixed;
-    background: #fff;
-    border: 0.5px solid #ccc;
-    border-radius: 10px;
-    padding: 10px 14px;
-    font-size: 13px;
-    pointer-events: none;
-    display: none;
-    max-width: 300px;
-    z-index: 100;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-  #tooltip .state-name { font-weight: 500; font-size: 14px; color: #111; margin-bottom: 6px; }
-  #tooltip .acct { color: #555; line-height: 1.6; font-size: 12px; }
+  h2 { font-size: 16px; font-weight: 500; margin-bottom: 2px; }
+  #sub { font-size: 12px; color: #666; margin-bottom: 6px; }
+  #controls { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .zbtn { background: #f4f4f4; border: 0.5px solid #ccc; border-radius: 6px; width: 28px; height: 28px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #1a1a1a; }
+  .zbtn:hover { background: #e8e8e8; }
+  #zoom-label { font-size: 11px; color: #888; }
+  #tooltip { position: fixed; background: #fff; border: 0.5px solid #ccc; border-radius: 10px; padding: 8px 12px; font-size: 12px; pointer-events: none; display: none; max-width: 260px; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+  #tooltip .tt-title { font-weight: 500; font-size: 13px; color: #111; }
+  #us-map { cursor: grab; display: block; width: 100%; flex: 1; min-height: 0; }
+  #us-map:active { cursor: grabbing; }
+  path.state { fill: #e8f0f8; stroke: #fff; stroke-width: 0.6; }
+  circle.dot { cursor: pointer; }
+  circle.dot:hover { fill: #7f2704; opacity: 1; }
 </style>
 </head>
 <body>
-<h2>Competitor Account Heatmap</h2>
-<p id="subtitle">Fire department accounts by state</p>
-<div id="count-label">Hover over a state to see accounts</div>
-<div id="legend">
-  <span>Accounts:</span>
-  <span class="leg-swatch" style="background:#dde8f5"></span><span>None</span>
-  <span class="leg-swatch" style="background:#f5c78e"></span><span>1–2</span>
-  <span class="leg-swatch" style="background:#f0933a"></span><span>3–6</span>
-  <span class="leg-swatch" style="background:#d95f0e"></span><span>7–12</span>
-  <span class="leg-swatch" style="background:#7f2704"></span><span>13+</span>
+<h2>Competitor Account Map</h2>
+<p id="sub">Every dot = one account · Scroll to zoom · Drag to pan · Hover for name</p>
+<div id="controls">
+  <button class="zbtn" id="zin">+</button>
+  <button class="zbtn" id="zout">−</button>
+  <button class="zbtn" id="zreset" style="width:auto;padding:0 10px;font-size:12px;">Reset</button>
+  <span id="zoom-label">Zoom: 1×</span>
 </div>
-<svg id="us-map" viewBox="0 0 960 600" style="width:100%;flex:1;min-height:0;display:block"></svg>
+<svg id="us-map" viewBox="0 0 960 600">
+  <g id="map-g"></g>
+</svg>
 <div id="tooltip"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script>
-const data = {
-  UT:["BRIGHAM CITY FIRE DEPARTMENT","Bluffdale Building Department/Bluffdale Metro Fire","Box Elder County Fire Marshal's Office","DRAPER CITY FIRE DEPARTMENT","Farmington City Fire Department","SOUTH DAVIS METRO FIRE AGENCY","LEHI CITY FIRE DEPARTMENT","Saratoga Springs Fire & EMS Dept","SANDY CITY FIRE DEPARTMENT","West Jordan Fire Department","Murray City Fire Department","SALT LAKE CITY CORPORATION","WEST VALLEY CITY FIRE DEPARTMENT","UNIFIED FIRE AUTHORITY","Provo Fire & Rescue","Spanish Fork Fire Department","Cedar City Fire Department","St. George Fire Department","Pleasant Grove Fire Department","Washington City Fire Department","Kaysville City Fire Department","Syracuse City Fire Department","South Davis Metro Fire","Wasatch County Fire District","Tremonton Fire Department"],
-  TX:["Lancaster Fire Department","Allen Fire Department","Wylie Fire Department","Cedar Hill Fire Department","Glenn Heights Fire Department","Missouri City Fire Department","Nederland Fire-Rescue","Marshall Fire Department","Lumberton Fire/Rescue"],
-  OH:["Columbus Fire Department","Jackson Twp-Franklin County Fire Dept","Lakewood Fire Dept","Howland Twp Fire Dept","Mount Orab Fire Dept","Beachwood Fire Rescue","North Olmsted Fire Dept","Washington Court House Fire Rescue","Shawnee Twp Fire Dept","Marysville Fire Dept","Brecksville Fire Dept","Richmond Heights Fire Dept","Van Wert Fire Dept","Olmsted Twp Fire Dept","Bucyrus Fire Dept","Jefferson Twp Fire Dept","Olmsted Falls Fire Dept","Bazetta Twp Fire Dept","Champion Twp Fire Dept","Mount Vernon Fire Department","Springfield Twp Fire Department","Madison Twp Fire Department","Tipp City Fire Department","Lima Fire Dept"],
-  IN:["Gary Fire Dept","Hammond Fire Department","Lafayette Fire Dept","Richmond Fire Department","Hobart Fire Dept","City of Schererville Fire Department","West Lafayette Fire Department","Crown Point Fire Rescue","Chesterton Fire Dept","Dyer Fire Department","City of Connersville Fire Department","Merrillville Fire Department","Saint John Fire Department","Town of Munster Fire Department"],
-  WI:["Waukesha Fire Department","PLOVER FIRE DEPARTMENT","Onalaska Fire Department","Fox Lake Community Fire Department","Fox Crossing Fire Department"],
-  IL:["FOX LAKE FIRE PROTECTION DISTRICT","Lake Zurich Fire-Rescue","Deerfield-Bannockburn Fire Protection District","North Maine Fire Prot Dist","FIRST FIRE PROTECTION DISTRICT OF ANTIOCH TOWNSHIP","GREATER ROUND LAKE FIRE PROTECTION DISTRICT","LAKE VILLA FIRE PROTECTION DISTRICT"],
-  NC:["Clayton Fire Department","Clinton Fire Department","Yadkinville Vol Fire Dept","Mebane Fire Dept","Apex Fire Dept","Carrboro Fire Rescue Dept","Chapel Hill Fire Dept","Morrisville Fire Rescue","Zebulon Fire Department","Hope Mills Fire Dept","Kinston Fire Dept","Hickory Fire Dept","Cumberland County Fire Marshal Office","Charlotte Fire Department","High Point Fire Dept","Concord Fire Department","Durham County Fire Marshal's Office","Fayetteville Fire Department","Union County Fire Marshal's Office","Mooresville Fire & Rescue","Chowan County Fire Marshals Office","Anson County Fire Marshal Office","Hertford County","Lenoir County","Martin County","Pender County","Burgaw Fire Dept"],
-  MN:["WINONA FIRE DEPARTMENT","ALBERT LEA FIRE RESCUE"],
-  AK:["Anchorage Fire Department","Sitka Fire Department"],
-  AL:["McAdory Area Fire Dist","Helena Fire Dept","Birmingham Fire & Rescue","Saraland Fire Rescue","Mobile Fire-Rescue Dept","Prichard Fire Dept","Homewood Fire Rescue"],
-  GA:["Cartersville Fire Dept","McDonough Fire Dept","Palmetto Fire Dept","East Point Fire Dept","Hapeville Fire Dept","Calhoun Fire Dept","Dalton Fire Dept","Catoosa County Fire Department","Gainesville Fire Department","Union City Fire Department","Pickens County Fire Department","Gordon County Fire Rescue","Houston County Fire Dept"],
-  HI:["County of Maui Fire Dept"],
-  ID:["State of Idaho","Pocatello Fire Department","Chubbuck Fire Department","Twin Falls Fire Department","Burley Fire Department","IDAHO FALLS FIRE DEPARTMENT","Bonneville County FD #1","Madison Fire Department","Donnelly Rural Fire Protection District","Kuna Rural Fire District","McCall Fire Protection District","Nampa Fire Department","Teton County Fire & Rescue","Eagle Fire Department","Blackfoot Fire Department","Franklin County Fire District","Montpelier Fire Department"],
-  MA:["Belchertown Fire Dept","Granby Fire Dept","South Hadley Fire Dist #2","Ware Fire Dept","Sturbridge Fire Dept","Amherst Fire Department"],
-  MT:["Hebgen Basin Rural Fire Dist"],
-  NY:["Village of Manlius Fire Dept"],
-  OR:["Seaside Fire & Rescue","Pendleton Fire & Ambulance","Warrenton Fire Department","Gearhart Fire Department"],
-  SC:["Surfside Beach Fire Dept","Myrtle Beach Fire Dept","Taylors Fire Dept"],
-  WY:["CASPER FIRE-EMS DEPARTMENT","CITY OF LARAMIE","Campbell County Fire Department","Sheridan Fire-Rescue","City of Rock Springs Fire Dept","Park County Fire Protection District #2"],
-  KS:["Dodge City Fire Department"],
-  CT:["Stafford Fire Marshal Office"],
-  CA:["Central County Fire Department"],
-  AR:["Clinton Fire Department"]
-};
-
-function getColor(n){
-  if(!n||n===0) return "#dde8f5";
-  if(n<=2) return "#f5c78e";
-  if(n<=6) return "#f0933a";
-  if(n<=12) return "#d95f0e";
-  return "#7f2704";
-}
-
-function getLabelColor(n){
-  if(!n||n===0) return "#5a7a9e";
-  if(n<=2) return "#7f4400";
-  if(n<=6) return "#4a2000";
-  return "#fff";
-}
+const accounts = [
+  {name:"BRIGHAM CITY FIRE DEPARTMENT",lat:41.5102,lng:-112.0158},
+  {name:"Bluffdale Building Department/Bluffdale Metro Fire",lat:40.4894,lng:-111.9385},
+  {name:"Box Elder County Fire Marshal's Office",lat:41.7130,lng:-112.1655},
+  {name:"DRAPER CITY FIRE DEPARTMENT",lat:40.5246,lng:-111.8638},
+  {name:"Farmington City Fire Department",lat:40.9805,lng:-111.8874},
+  {name:"SOUTH DAVIS METRO FIRE AGENCY",lat:40.9700,lng:-111.8800},
+  {name:"South Davis Metro Fire",lat:40.9600,lng:-111.8700},
+  {name:"LEHI CITY FIRE DEPARTMENT",lat:40.3916,lng:-111.8507},
+  {name:"Saratoga Springs Fire & EMS Dept",lat:40.3494,lng:-111.9038},
+  {name:"SANDY CITY FIRE DEPARTMENT",lat:40.5649,lng:-111.8389},
+  {name:"West Jordan Fire Department",lat:40.6097,lng:-111.9391},
+  {name:"Murray City Fire Department",lat:40.6669,lng:-111.8879},
+  {name:"SALT LAKE CITY CORPORATION",lat:40.7608,lng:-111.8910},
+  {name:"UNIFIED FIRE AUTHORITY",lat:40.7500,lng:-111.9200},
+  {name:"WEST VALLEY CITY FIRE DEPARTMENT",lat:40.6916,lng:-112.0010},
+  {name:"Provo Fire & Rescue",lat:40.2338,lng:-111.6585},
+  {name:"Spanish Fork Fire Department",lat:40.1150,lng:-111.6549},
+  {name:"Cedar City Fire Department",lat:37.6775,lng:-113.0619},
+  {name:"St. George Fire Department",lat:37.0965,lng:-113.5684},
+  {name:"Washington City Fire Department",lat:37.1300,lng:-113.5100},
+  {name:"Pleasant Grove Fire Department",lat:40.3641,lng:-111.7385},
+  {name:"Kaysville City Fire Department",lat:41.0352,lng:-111.9385},
+  {name:"Syracuse City Fire Department",lat:41.0894,lng:-112.0652},
+  {name:"Wasatch County Fire District",lat:40.3302,lng:-111.1741},
+  {name:"Tremonton Fire Department",lat:41.7130,lng:-112.2000},
+  {name:"Lancaster Fire Department",lat:32.5921,lng:-96.7561},
+  {name:"Allen Fire Department",lat:33.1032,lng:-96.6705},
+  {name:"Wylie Fire Department",lat:33.0151,lng:-96.5388},
+  {name:"Cedar Hill Fire Department",lat:32.5885,lng:-96.9561},
+  {name:"Glenn Heights Fire Department",lat:32.5429,lng:-96.8597},
+  {name:"Missouri City Fire Department",lat:29.6188,lng:-95.5385},
+  {name:"Nederland Fire-Rescue",lat:29.9749,lng:-93.9960},
+  {name:"Marshall Fire Department",lat:32.5446,lng:-94.3677},
+  {name:"Lumberton Fire/Rescue",lat:30.2688,lng:-94.1910},
+  {name:"Columbus Fire Department",lat:39.9612,lng:-82.9988},
+  {name:"Jackson Twp-Franklin County Fire Dept",lat:39.9000,lng:-82.9500},
+  {name:"Madison Twp Fire Department",lat:39.8800,lng:-82.9200},
+  {name:"Lakewood Fire Dept",lat:41.4820,lng:-81.7982},
+  {name:"North Olmsted Fire Dept",lat:41.4151,lng:-81.9235},
+  {name:"Olmsted Twp Fire Dept",lat:41.3900,lng:-81.9000},
+  {name:"Olmsted Falls Fire Dept",lat:41.3724,lng:-81.9010},
+  {name:"Brecksville Fire Dept",lat:41.3145,lng:-81.6268},
+  {name:"Richmond Heights Fire Dept",lat:41.5567,lng:-81.5007},
+  {name:"Beachwood Fire Rescue",lat:41.4648,lng:-81.5085},
+  {name:"Howland Twp Fire Dept",lat:41.2800,lng:-80.7500},
+  {name:"Bazetta Twp Fire Dept",lat:41.3100,lng:-80.8000},
+  {name:"Champion Twp Fire Dept",lat:41.3300,lng:-80.8500},
+  {name:"Mount Orab Fire Dept",lat:39.0278,lng:-83.9213},
+  {name:"Washington Court House Fire Rescue",lat:39.5362,lng:-83.4374},
+  {name:"Shawnee Twp Fire Dept",lat:39.5000,lng:-83.4800},
+  {name:"Marysville Fire Dept",lat:40.2362,lng:-83.3674},
+  {name:"Van Wert Fire Dept",lat:40.8687,lng:-84.5835},
+  {name:"Bucyrus Fire Dept",lat:40.8081,lng:-82.9738},
+  {name:"Jefferson Twp Fire Dept",lat:39.7423,lng:-84.2616},
+  {name:"Springfield Twp Fire Department",lat:39.7800,lng:-84.3000},
+  {name:"Tipp City Fire Department",lat:39.9612,lng:-84.1741},
+  {name:"Lima Fire Dept",lat:40.7423,lng:-84.1052},
+  {name:"Mount Vernon Fire Department",lat:40.3934,lng:-82.4821},
+  {name:"Gary Fire Dept",lat:41.5934,lng:-87.3464},
+  {name:"Hammond Fire Department",lat:41.5833,lng:-87.5000},
+  {name:"Hobart Fire Dept",lat:41.5325,lng:-87.2550},
+  {name:"City of Schererville Fire Department",lat:41.4789,lng:-87.4264},
+  {name:"Crown Point Fire Rescue",lat:41.4167,lng:-87.3667},
+  {name:"Chesterton Fire Dept",lat:41.6083,lng:-87.0631},
+  {name:"Dyer Fire Department",lat:41.4950,lng:-87.5200},
+  {name:"Merrillville Fire Department",lat:41.4731,lng:-87.3317},
+  {name:"Saint John Fire Department",lat:41.4500,lng:-87.4700},
+  {name:"Town of Munster Fire Department",lat:41.5639,lng:-87.5122},
+  {name:"Lafayette Fire Dept",lat:40.4167,lng:-86.8753},
+  {name:"West Lafayette Fire Department",lat:40.4259,lng:-86.9081},
+  {name:"Richmond Fire Department",lat:39.8289,lng:-84.8902},
+  {name:"City of Connersville Fire Department",lat:39.6412,lng:-85.1410},
+  {name:"Waukesha Fire Department",lat:43.0117,lng:-88.2315},
+  {name:"PLOVER FIRE DEPARTMENT",lat:44.4538,lng:-89.5387},
+  {name:"Onalaska Fire Department",lat:43.8836,lng:-91.2349},
+  {name:"Fox Lake Community Fire Department",lat:43.5669,lng:-88.5065},
+  {name:"Fox Crossing Fire Department",lat:44.2494,lng:-88.4815},
+  {name:"FOX LAKE FIRE PROTECTION DISTRICT",lat:42.4006,lng:-88.1856},
+  {name:"FIRST FIRE PROTECTION DISTRICT OF ANTIOCH TOWNSHIP",lat:42.4700,lng:-88.0956},
+  {name:"GREATER ROUND LAKE FIRE PROTECTION DISTRICT",lat:42.3500,lng:-88.0900},
+  {name:"LAKE VILLA FIRE PROTECTION DISTRICT",lat:42.4167,lng:-88.0833},
+  {name:"Lake Zurich Fire-Rescue",lat:42.1978,lng:-88.0870},
+  {name:"Deerfield-Bannockburn Fire Protection District",lat:42.1700,lng:-87.8600},
+  {name:"North Maine Fire Prot Dist",lat:42.0334,lng:-87.8834},
+  {name:"Charlotte Fire Department",lat:35.2271,lng:-80.8431},
+  {name:"Concord Fire Department",lat:35.4088,lng:-80.5795},
+  {name:"Union County Fire Marshal's Office",lat:34.9877,lng:-80.5401},
+  {name:"Mooresville Fire & Rescue",lat:35.5846,lng:-80.8098},
+  {name:"Anson County Fire Marshal Office",lat:34.9500,lng:-80.0833},
+  {name:"Clayton Fire Department",lat:35.6507,lng:-78.4569},
+  {name:"Apex Fire Dept",lat:35.7327,lng:-78.8502},
+  {name:"Morrisville Fire Rescue",lat:35.8235,lng:-78.8253},
+  {name:"Zebulon Fire Department",lat:35.8224,lng:-78.3144},
+  {name:"Durham County Fire Marshal's Office",lat:35.9940,lng:-78.8986},
+  {name:"Chapel Hill Fire Dept",lat:35.9132,lng:-79.0558},
+  {name:"Carrboro Fire Rescue Dept",lat:35.9099,lng:-79.0750},
+  {name:"Mebane Fire Dept",lat:36.0960,lng:-79.2672},
+  {name:"Fayetteville Fire Department",lat:35.0527,lng:-78.8784},
+  {name:"Hope Mills Fire Dept",lat:34.9710,lng:-78.9456},
+  {name:"Cumberland County Fire Marshal Office",lat:35.0100,lng:-78.9700},
+  {name:"Kinston Fire Dept",lat:35.2627,lng:-77.5816},
+  {name:"Lenoir County",lat:35.3000,lng:-77.6000},
+  {name:"Hickory Fire Dept",lat:35.7326,lng:-81.3412},
+  {name:"Clinton Fire Department",lat:34.9985,lng:-78.3228},
+  {name:"Yadkinville Vol Fire Dept",lat:36.1318,lng:-80.6576},
+  {name:"High Point Fire Dept",lat:35.9557,lng:-80.0053},
+  {name:"Chowan County Fire Marshals Office",lat:36.1171,lng:-76.6877},
+  {name:"Hertford County",lat:36.3500,lng:-76.9833},
+  {name:"Martin County",lat:35.8400,lng:-77.1000},
+  {name:"Pender County",lat:34.5000,lng:-77.8833},
+  {name:"Burgaw Fire Dept",lat:34.5543,lng:-77.9233},
+  {name:"WINONA FIRE DEPARTMENT",lat:44.0499,lng:-91.6388},
+  {name:"ALBERT LEA FIRE RESCUE",lat:43.6480,lng:-93.3683},
+  {name:"Anchorage Fire Department",lat:61.2181,lng:-149.9003},
+  {name:"Sitka Fire Department",lat:57.0531,lng:-135.3300},
+  {name:"Birmingham Fire & Rescue",lat:33.5186,lng:-86.8104},
+  {name:"McAdory Area Fire Dist",lat:33.4800,lng:-86.9500},
+  {name:"Helena Fire Dept",lat:33.2968,lng:-86.8436},
+  {name:"Homewood Fire Rescue",lat:33.4668,lng:-86.8025},
+  {name:"Saraland Fire Rescue",lat:30.8210,lng:-88.0836},
+  {name:"Mobile Fire-Rescue Dept",lat:30.6954,lng:-88.0399},
+  {name:"Prichard Fire Dept",lat:30.7374,lng:-88.0789},
+  {name:"East Point Fire Dept",lat:33.6795,lng:-84.4399},
+  {name:"Hapeville Fire Dept",lat:33.6601,lng:-84.4077},
+  {name:"Union City Fire Department",lat:33.5871,lng:-84.5427},
+  {name:"McDonough Fire Dept",lat:33.4473,lng:-84.1477},
+  {name:"Palmetto Fire Dept",lat:33.5196,lng:-84.6685},
+  {name:"Cartersville Fire Dept",lat:34.1651,lng:-84.7999},
+  {name:"Calhoun Fire Dept",lat:34.5026,lng:-84.9513},
+  {name:"Dalton Fire Dept",lat:34.7698,lng:-84.9702},
+  {name:"Catoosa County Fire Department",lat:34.8987,lng:-85.1244},
+  {name:"Gordon County Fire Rescue",lat:34.5500,lng:-84.9700},
+  {name:"Pickens County Fire Department",lat:34.4600,lng:-84.4700},
+  {name:"Gainesville Fire Department",lat:34.2979,lng:-83.8241},
+  {name:"Houston County Fire Dept",lat:32.6130,lng:-83.5996},
+  {name:"County of Maui Fire Dept",lat:20.7984,lng:-156.3319},
+  {name:"State of Idaho",lat:43.6150,lng:-116.2023},
+  {name:"Nampa Fire Department",lat:43.5407,lng:-116.5635},
+  {name:"Kuna Rural Fire District",lat:43.4924,lng:-116.4199},
+  {name:"Eagle Fire Department",lat:43.6955,lng:-116.3535},
+  {name:"Pocatello Fire Department",lat:42.8713,lng:-112.4455},
+  {name:"Chubbuck Fire Department",lat:42.9194,lng:-112.4669},
+  {name:"Blackfoot Fire Department",lat:43.1905,lng:-112.3447},
+  {name:"Franklin County Fire District",lat:42.1800,lng:-111.8000},
+  {name:"Montpelier Fire Department",lat:42.3224,lng:-111.2977},
+  {name:"Twin Falls Fire Department",lat:42.5629,lng:-114.4609},
+  {name:"Burley Fire Department",lat:42.5357,lng:-113.7924},
+  {name:"IDAHO FALLS FIRE DEPARTMENT",lat:43.4917,lng:-112.0339},
+  {name:"Bonneville County FD #1",lat:43.5000,lng:-112.0500},
+  {name:"Madison Fire Department",lat:43.8135,lng:-111.7885},
+  {name:"McCall Fire Protection District",lat:44.9052,lng:-116.1002},
+  {name:"Donnelly Rural Fire Protection District",lat:44.5600,lng:-116.0700},
+  {name:"Teton County Fire & Rescue",lat:43.4799,lng:-110.7624},
+  {name:"Belchertown Fire Dept",lat:42.2790,lng:-72.4098},
+  {name:"Granby Fire Dept",lat:42.2557,lng:-72.8204},
+  {name:"South Hadley Fire Dist #2",lat:42.2557,lng:-72.5779},
+  {name:"Ware Fire Dept",lat:42.2598,lng:-72.2404},
+  {name:"Sturbridge Fire Dept",lat:42.1034,lng:-72.0793},
+  {name:"Amherst Fire Department",lat:42.3732,lng:-72.5199},
+  {name:"Hebgen Basin Rural Fire Dist",lat:44.8721,lng:-111.3271},
+  {name:"Village of Manlius Fire Dept",lat:43.0001,lng:-75.9799},
+  {name:"Seaside Fire & Rescue",lat:45.9932,lng:-123.9229},
+  {name:"Warrenton Fire Department",lat:46.1651,lng:-123.9229},
+  {name:"Gearhart Fire Department",lat:46.0246,lng:-123.9151},
+  {name:"Pendleton Fire & Ambulance",lat:45.6721,lng:-118.7886},
+  {name:"Myrtle Beach Fire Dept",lat:33.6891,lng:-78.8867},
+  {name:"Surfside Beach Fire Dept",lat:33.6068,lng:-78.9756},
+  {name:"Taylors Fire Dept",lat:34.9182,lng:-82.3090},
+  {name:"CASPER FIRE-EMS DEPARTMENT",lat:42.8666,lng:-106.3131},
+  {name:"CITY OF LARAMIE",lat:41.3114,lng:-105.5911},
+  {name:"Campbell County Fire Department",lat:44.2694,lng:-105.5011},
+  {name:"Sheridan Fire-Rescue",lat:44.7972,lng:-106.9561},
+  {name:"City of Rock Springs Fire Dept",lat:41.5875,lng:-109.2029},
+  {name:"Park County Fire Protection District #2",lat:44.3894,lng:-109.5261},
+  {name:"Dodge City Fire Department",lat:37.7528,lng:-100.0171},
+  {name:"Stafford Fire Marshal Office",lat:41.9837,lng:-72.2937},
+  {name:"Central County Fire Department",lat:37.4852,lng:-122.2364},
+  {name:"Clinton Fire Department",lat:35.5951,lng:-92.4607},
+];
 
 const tooltip = document.getElementById("tooltip");
-const countLabel = document.getElementById("count-label");
-
-const stateNames = {"01":"AL","02":"AK","04":"AZ","05":"AR","06":"CA","08":"CO","09":"CT","10":"DE","11":"DC","12":"FL","13":"GA","15":"HI","16":"ID","17":"IL","18":"IN","19":"IA","20":"KS","21":"KY","22":"LA","23":"ME","24":"MD","25":"MA","26":"MI","27":"MN","28":"MS","29":"MO","30":"MT","31":"NE","32":"NV","33":"NH","34":"NJ","35":"NM","36":"NY","37":"NC","38":"ND","39":"OH","40":"OK","41":"OR","42":"PA","44":"RI","45":"SC","46":"SD","47":"TN","48":"TX","49":"UT","50":"VT","51":"VA","53":"WA","54":"WV","55":"WI","56":"WY"};
+const zoomLabel = document.getElementById("zoom-label");
 
 fetch("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json")
   .then(r=>r.json())
   .then(us=>{
     const svg = d3.select("#us-map");
+    const g = d3.select("#map-g");
     const projection = d3.geoAlbersUsa().scale(1280).translate([480,300]);
     const path = d3.geoPath().projection(projection);
     const states = topojson.feature(us, us.objects.states);
 
-    svg.selectAll("path")
+    g.selectAll("path.state")
       .data(states.features)
       .join("path")
-      .attr("d", path)
-      .attr("fill", d=>{
-        const abbr = stateNames[String(d.id).padStart(2,"0")];
-        return getColor(data[abbr] ? data[abbr].length : 0);
-      })
-      .attr("stroke","#fff")
+      .attr("class","state")
+      .attr("d", path);
+
+    g.selectAll("circle.dot")
+      .data(accounts)
+      .join("circle")
+      .attr("class","dot")
+      .attr("cx", d=>{ const p=projection([d.lng,d.lat]); return p?p[0]:-999; })
+      .attr("cy", d=>{ const p=projection([d.lng,d.lat]); return p?p[1]:-999; })
+      .attr("r", 5)
+      .attr("fill","#d95f0e")
+      .attr("fill-opacity","0.8")
+      .attr("stroke","#7f2704")
       .attr("stroke-width","0.8")
-      .on("mousemove", function(event, d){
-        const abbr = stateNames[String(d.id).padStart(2,"0")];
-        const accts = data[abbr];
-        if(!accts||accts.length===0){
-          tooltip.style.display="none";
-          countLabel.textContent="No competitor accounts in this state";
-          return;
-        }
-        const list = accts.map(a=>`<div class='acct'>• ${a}</div>`).join("");
-        tooltip.innerHTML=`<div class='state-name'>${abbr} — ${accts.length} account${accts.length>1?'s':''}</div>${list}`;
+      .on("mousemove", function(event,d){
+        tooltip.innerHTML=`<div class='tt-title'>${d.name}</div>`;
         tooltip.style.display="block";
         tooltip.style.left=(event.clientX+14)+"px";
         tooltip.style.top=(event.clientY+14)+"px";
-        countLabel.textContent=`${abbr}: ${accts.length} account${accts.length>1?'s':''}`;
       })
-      .on("mouseleave",function(){
-        tooltip.style.display="none";
-        countLabel.textContent="Hover over a state to see accounts";
+      .on("mouseleave",()=>{ tooltip.style.display="none"; });
+
+    const zoom = d3.zoom()
+      .scaleExtent([1,16])
+      .on("zoom",(event)=>{
+        g.attr("transform", event.transform);
+        const k = event.transform.k;
+        g.selectAll("circle.dot")
+          .attr("r", 5 / Math.sqrt(k))
+          .attr("stroke-width", 0.8 / k);
+        zoomLabel.textContent=`Zoom: ${Math.round(k*10)/10}×`;
       });
 
-    svg.selectAll("text.count-label")
-      .data(states.features)
-      .join("text")
-      .attr("class","count-label")
-      .attr("transform", d=>{
-        const c = path.centroid(d);
-        return `translate(${c[0]},${c[1]})`;
-      })
-      .attr("text-anchor","middle")
-      .attr("dominant-baseline","central")
-      .attr("font-size","10")
-      .attr("font-weight","500")
-      .attr("fill", d=>{
-        const abbr = stateNames[String(d.id).padStart(2,"0")];
-        const n = data[abbr] ? data[abbr].length : 0;
-        return getLabelColor(n);
-      })
-      .text(d=>{
-        const abbr = stateNames[String(d.id).padStart(2,"0")];
-        const n = data[abbr] ? data[abbr].length : 0;
-        return n > 0 ? n : "";
-      });
+    svg.call(zoom);
+    document.getElementById("zin").onclick=()=>svg.transition().duration(300).call(zoom.scaleBy,2);
+    document.getElementById("zout").onclick=()=>svg.transition().duration(300).call(zoom.scaleBy,0.5);
+    document.getElementById("zreset").onclick=()=>svg.transition().duration(400).call(zoom.transform,d3.zoomIdentity);
   });
 </script>
 </body>
