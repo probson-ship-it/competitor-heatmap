@@ -3,15 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Competitor Account map</title>
+<title>Competitor Account Heatmap</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fff; color: #1a1a1a; padding: 1.5rem; }
-  h2 { font-size: 18px; font-weight: 500; margin-bottom: 0.25rem; }
-  #subtitle { font-size: 13px; color: #666; margin-bottom: 1rem; }
-  #count-label { font-size: 13px; color: #666; margin-bottom: 0.5rem; }
-  #legend { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; font-size: 12px; color: #555; flex-wrap: wrap; }
-  .leg-swatch { width: 16px; height: 16px; border-radius: 3px; display: inline-block; border: 0.5px solid rgba(0,0,0,0.1); }
+  html, body { height: 100%; overflow: hidden; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fff; color: #1a1a1a; padding: 0.75rem 1.25rem; display: flex; flex-direction: column; height: 100vh; }
+  h2 { font-size: 16px; font-weight: 500; margin-bottom: 0.1rem; }
+  #subtitle { font-size: 12px; color: #666; margin-bottom: 0.4rem; }
+  #count-label { font-size: 12px; color: #666; margin-bottom: 0.3rem; }
+  #legend { display: flex; align-items: center; gap: 8px; margin-bottom: 0.4rem; font-size: 11px; color: #555; flex-wrap: wrap; }
+  .leg-swatch { width: 13px; height: 13px; border-radius: 3px; display: inline-block; border: 0.5px solid rgba(0,0,0,0.1); }
   svg path { cursor: pointer; transition: opacity 0.1s; }
   svg path:hover { opacity: 0.7; }
   svg text { pointer-events: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
@@ -44,7 +45,7 @@
   <span class="leg-swatch" style="background:#d95f0e"></span><span>7–12</span>
   <span class="leg-swatch" style="background:#7f2704"></span><span>13+</span>
 </div>
-<svg id="us-map" viewBox="0 0 960 600" style="width:100%;height:auto;display:block"></svg>
+<svg id="us-map" viewBox="0 0 960 600" style="width:100%;flex:1;min-height:0;display:block"></svg>
 <div id="tooltip"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
