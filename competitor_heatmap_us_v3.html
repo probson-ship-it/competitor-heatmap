@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Competitor Account Heatmap</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fff; color: #1a1a1a; padding: 1.5rem; }
+  h2 { font-size: 18px; font-weight: 500; margin-bottom: 0.25rem; }
+  #subtitle { font-size: 13px; color: #666; margin-bottom: 1rem; }
+  #count-label { font-size: 13px; color: #666; margin-bottom: 0.5rem; }
+  #legend { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; font-size: 12px; color: #555; flex-wrap: wrap; }
+  .leg-swatch { width: 16px; height: 16px; border-radius: 3px; display: inline-block; border: 0.5px solid rgba(0,0,0,0.1); }
+  svg path { cursor: pointer; transition: opacity 0.1s; }
+  svg path:hover { opacity: 0.7; }
+  svg text { pointer-events: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  #tooltip {
+    position: fixed;
+    background: #fff;
+    border: 0.5px solid #ccc;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    pointer-events: none;
+    display: none;
+    max-width: 300px;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  #tooltip .state-name { font-weight: 500; font-size: 14px; color: #111; margin-bottom: 6px; }
+  #tooltip .acct { color: #555; line-height: 1.6; font-size: 12px; }
+</style>
+</head>
+<body>
+<h2>Competitor Account Heatmap</h2>
+<p id="subtitle">Fire department accounts by state</p>
+<div id="count-label">Hover over a state to see accounts</div>
+<div id="legend">
+  <span>Accounts:</span>
+  <span class="leg-swatch" style="background:#dde8f5"></span><span>None</span>
+  <span class="leg-swatch" style="background:#f5c78e"></span><span>1–2</span>
+  <span class="leg-swatch" style="background:#f0933a"></span><span>3–6</span>
+  <span class="leg-swatch" style="background:#d95f0e"></span><span>7–12</span>
+  <span class="leg-swatch" style="background:#7f2704"></span><span>13+</span>
+</div>
+<svg id="us-map" viewBox="0 0 960 600" style="width:100%;height:auto;display:block"></svg>
+<div id="tooltip"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script>
+const data = {
+  UT:["BRIGHAM CITY FIRE DEPARTMENT","Bluffdale Building Department/Bluffdale Metro Fire","Box Elder County Fire Marshal's Office","DRAPER CITY FIRE DEPARTMENT","Farmington City Fire Department","SOUTH DAVIS METRO FIRE AGENCY","LEHI CITY FIRE DEPARTMENT","Saratoga Springs Fire & EMS Dept","SANDY CITY FIRE DEPARTMENT","West Jordan Fire Department","Murray City Fire Department","SALT LAKE CITY CORPORATION","WEST VALLEY CITY FIRE DEPARTMENT","UNIFIED FIRE AUTHORITY","Provo Fire & Rescue","Spanish Fork Fire Department","Cedar City Fire Department","St. George Fire Department","Pleasant Grove Fire Department","Washington City Fire Department","Kaysville City Fire Department","Syracuse City Fire Department","South Davis Metro Fire","Wasatch County Fire District","Tremonton Fire Department"],
+  TX:["Lancaster Fire Department","Allen Fire Department","Wylie Fire Department","Cedar Hill Fire Department","Glenn Heights Fire Department","Missouri City Fire Department","Nederland Fire-Rescue","Marshall Fire Department","Lumberton Fire/Rescue"],
+  OH:["Columbus Fire Department","Jackson Twp-Franklin County Fire Dept","Lakewood Fire Dept","Howland Twp Fire Dept","Mount Orab Fire Dept","Beachwood Fire Rescue","North Olmsted Fire Dept","Washington Court House Fire Rescue","Shawnee Twp Fire Dept","Marysville Fire Dept","Brecksville Fire Dept","Richmond Heights Fire Dept","Van Wert Fire Dept","Olmsted Twp Fire Dept","Bucyrus Fire Dept","Jefferson Twp Fire Dept","Olmsted Falls Fire Dept","Bazetta Twp Fire Dept","Champion Twp Fire Dept","Mount Vernon Fire Department","Springfield Twp Fire Department","Madison Twp Fire Department","Tipp City Fire Department","Lima Fire Dept"],
+  IN:["Gary Fire Dept","Hammond Fire Department","Lafayette Fire Dept","Richmond Fire Department","Hobart Fire Dept","City of Schererville Fire Department","West Lafayette Fire Department","Crown Point Fire Rescue","Chesterton Fire Dept","Dyer Fire Department","City of Connersville Fire Department","Merrillville Fire Department","Saint John Fire Department","Town of Munster Fire Department"],
+  WI:["Waukesha Fire Department","PLOVER FIRE DEPARTMENT","Onalaska Fire Department","Fox Lake Community Fire Department","Fox Crossing Fire Department"],
+  IL:["FOX LAKE FIRE PROTECTION DISTRICT","Lake Zurich Fire-Rescue","Deerfield-Bannockburn Fire Protection District","North Maine Fire Prot Dist","FIRST FIRE PROTECTION DISTRICT OF ANTIOCH TOWNSHIP","GREATER ROUND LAKE FIRE PROTECTION DISTRICT","LAKE VILLA FIRE PROTECTION DISTRICT"],
+  NC:["Clayton Fire Department","Clinton Fire Department","Yadkinville Vol Fire Dept","Mebane Fire Dept","Apex Fire Dept","Carrboro Fire Rescue Dept","Chapel Hill Fire Dept","Morrisville Fire Rescue","Zebulon Fire Department","Hope Mills Fire Dept","Kinston Fire Dept","Hickory Fire Dept","Cumberland County Fire Marshal Office","Charlotte Fire Department","High Point Fire Dept","Concord Fire Department","Durham County Fire Marshal's Office","Fayetteville Fire Department","Union County Fire Marshal's Office","Mooresville Fire & Rescue","Chowan County Fire Marshals Office","Anson County Fire Marshal Office","Hertford County","Lenoir County","Martin County","Pender County","Burgaw Fire Dept"],
+  MN:["WINONA FIRE DEPARTMENT","ALBERT LEA FIRE RESCUE"],
+  AK:["Anchorage Fire Department","Sitka Fire Department"],
+  AL:["McAdory Area Fire Dist","Helena Fire Dept","Birmingham Fire & Rescue","Saraland Fire Rescue","Mobile Fire-Rescue Dept","Prichard Fire Dept","Homewood Fire Rescue"],
+  GA:["Cartersville Fire Dept","McDonough Fire Dept","Palmetto Fire Dept","East Point Fire Dept","Hapeville Fire Dept","Calhoun Fire Dept","Dalton Fire Dept","Catoosa County Fire Department","Gainesville Fire Department","Union City Fire Department","Pickens County Fire Department","Gordon County Fire Rescue","Houston County Fire Dept"],
+  HI:["County of Maui Fire Dept"],
+  ID:["State of Idaho","Pocatello Fire Department","Chubbuck Fire Department","Twin Falls Fire Department","Burley Fire Department","IDAHO FALLS FIRE DEPARTMENT","Bonneville County FD #1","Madison Fire Department","Donnelly Rural Fire Protection District","Kuna Rural Fire District","McCall Fire Protection District","Nampa Fire Department","Teton County Fire & Rescue","Eagle Fire Department","Blackfoot Fire Department","Franklin County Fire District","Montpelier Fire Department"],
+  MA:["Belchertown Fire Dept","Granby Fire Dept","South Hadley Fire Dist #2","Ware Fire Dept","Sturbridge Fire Dept","Amherst Fire Department"],
+  MT:["Hebgen Basin Rural Fire Dist"],
+  NY:["Village of Manlius Fire Dept"],
+  OR:["Seaside Fire & Rescue","Pendleton Fire & Ambulance","Warrenton Fire Department","Gearhart Fire Department"],
+  SC:["Surfside Beach Fire Dept","Myrtle Beach Fire Dept","Taylors Fire Dept"],
+  WY:["CASPER FIRE-EMS DEPARTMENT","CITY OF LARAMIE","Campbell County Fire Department","Sheridan Fire-Rescue","City of Rock Springs Fire Dept","Park County Fire Protection District #2"],
+  KS:["Dodge City Fire Department"],
+  CT:["Stafford Fire Marshal Office"],
+  CA:["Central County Fire Department"],
+  AR:["Clinton Fire Department"]
+};
+
+function getColor(n){
+  if(!n||n===0) return "#dde8f5";
+  if(n<=2) return "#f5c78e";
+  if(n<=6) return "#f0933a";
+  if(n<=12) return "#d95f0e";
+  return "#7f2704";
+}
+
+function getLabelColor(n){
+  if(!n||n===0) return "#5a7a9e";
+  if(n<=2) return "#7f4400";
+  if(n<=6) return "#4a2000";
+  return "#fff";
+}
+
+const tooltip = document.getElementById("tooltip");
+const countLabel = document.getElementById("count-label");
+
+const stateNames = {"01":"AL","02":"AK","04":"AZ","05":"AR","06":"CA","08":"CO","09":"CT","10":"DE","11":"DC","12":"FL","13":"GA","15":"HI","16":"ID","17":"IL","18":"IN","19":"IA","20":"KS","21":"KY","22":"LA","23":"ME","24":"MD","25":"MA","26":"MI","27":"MN","28":"MS","29":"MO","30":"MT","31":"NE","32":"NV","33":"NH","34":"NJ","35":"NM","36":"NY","37":"NC","38":"ND","39":"OH","40":"OK","41":"OR","42":"PA","44":"RI","45":"SC","46":"SD","47":"TN","48":"TX","49":"UT","50":"VT","51":"VA","53":"WA","54":"WV","55":"WI","56":"WY"};
+
+fetch("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json")
+  .then(r=>r.json())
+  .then(us=>{
+    const svg = d3.select("#us-map");
+    const projection = d3.geoAlbersUsa().scale(1280).translate([480,300]);
+    const path = d3.geoPath().projection(projection);
+    const states = topojson.feature(us, us.objects.states);
+
+    svg.selectAll("path")
+      .data(states.features)
+      .join("path")
+      .attr("d", path)
+      .attr("fill", d=>{
+        const abbr = stateNames[String(d.id).padStart(2,"0")];
+        return getColor(data[abbr] ? data[abbr].length : 0);
+      })
+      .attr("stroke","#fff")
+      .attr("stroke-width","0.8")
+      .on("mousemove", function(event, d){
+        const abbr = stateNames[String(d.id).padStart(2,"0")];
+        const accts = data[abbr];
+        if(!accts||accts.length===0){
+          tooltip.style.display="none";
+          countLabel.textContent="No competitor accounts in this state";
+          return;
+        }
+        const list = accts.map(a=>`<div class='acct'>• ${a}</div>`).join("");
+        tooltip.innerHTML=`<div class='state-name'>${abbr} — ${accts.length} account${accts.length>1?'s':''}</div>${list}`;
+        tooltip.style.display="block";
+        tooltip.style.left=(event.clientX+14)+"px";
+        tooltip.style.top=(event.clientY+14)+"px";
+        countLabel.textContent=`${abbr}: ${accts.length} account${accts.length>1?'s':''}`;
+      })
+      .on("mouseleave",function(){
+        tooltip.style.display="none";
+        countLabel.textContent="Hover over a state to see accounts";
+      });
+
+    svg.selectAll("text.count-label")
+      .data(states.features)
+      .join("text")
+      .attr("class","count-label")
+      .attr("transform", d=>{
+        const c = path.centroid(d);
+        return `translate(${c[0]},${c[1]})`;
+      })
+      .attr("text-anchor","middle")
+      .attr("dominant-baseline","central")
+      .attr("font-size","10")
+      .attr("font-weight","500")
+      .attr("fill", d=>{
+        const abbr = stateNames[String(d.id).padStart(2,"0")];
+        const n = data[abbr] ? data[abbr].length : 0;
+        return getLabelColor(n);
+      })
+      .text(d=>{
+        const abbr = stateNames[String(d.id).padStart(2,"0")];
+        const n = data[abbr] ? data[abbr].length : 0;
+        return n > 0 ? n : "";
+      });
+  });
+</script>
+</body>
+</html>
