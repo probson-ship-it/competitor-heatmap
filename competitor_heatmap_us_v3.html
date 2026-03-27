@@ -3,43 +3,123 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Competitor Account Dot Map</title>
+<title>BRYCER — Competitor Account Map + Campaign Engagement</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fff; color: #1a1a1a; padding: 0.75rem 1.25rem; display: flex; flex-direction: column; height: 100vh; }
-  h2 { font-size: 16px; font-weight: 500; margin-bottom: 2px; }
-  #sub { font-size: 12px; color: #666; margin-bottom: 6px; }
+
+  #header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  #header-left h2 { font-size: 15px; font-weight: 600; color: #1a1a1a; letter-spacing: 0.02em; }
+  #sub { font-size: 11px; color: #888; margin-top: 2px; }
+
   #controls { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .zbtn { background: #f4f4f4; border: 0.5px solid #ccc; border-radius: 6px; width: 28px; height: 28px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #1a1a1a; }
-  .zbtn:hover { background: #e8e8e8; }
-  #zoom-label { font-size: 11px; color: #888; }
-  #tooltip { position: fixed; background: #fff; border: 0.5px solid #ccc; border-radius: 10px; padding: 8px 12px; font-size: 12px; pointer-events: none; display: none; max-width: 260px; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
-  #tooltip .tt-title { font-weight: 500; font-size: 13px; color: #111; }
+  .zbtn { background: #f4f4f4; border: 1px solid #ddd; border-radius: 6px; width: 28px; height: 28px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #333; }
+  .zbtn:hover { background: #e8e8e8; color: #000; }
+  #zoom-label { font-size: 11px; color: #999; }
+
+  /* Legend */
+  #legend {
+    display: flex; flex-direction: column; gap: 6px;
+    background: #f9f9f9; border: 1px solid #e0e0e0;
+    border-radius: 10px; padding: 10px 14px;
+    margin-left: auto; min-width: 220px;
+  }
+  #legend-title { font-size: 11px; font-weight: 700; color: #333; text-transform: uppercase; letter-spacing: 0.06em; }
+  .legend-section-label { font-size: 10px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #444; }
+  .legend-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+  .legend-divider { border: none; border-top: 1px solid #e4e4e4; margin: 4px 0; }
+  .legend-heat { width: 100%; height: 10px; border-radius: 4px; background: linear-gradient(to right, rgba(255,220,0,0.25), rgba(255,100,0,0.55), rgba(200,0,40,0.88)); margin-top: 3px; }
+  .heat-labels { display: flex; justify-content: space-between; font-size: 10px; color: #999; margin-top: 2px; }
+
+  #tooltip {
+    position: fixed; background: #fff; border: 1px solid #ddd;
+    border-radius: 10px; padding: 10px 14px; font-size: 12px;
+    pointer-events: none; display: none; max-width: 280px; z-index: 100;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+  #tooltip .tt-title { font-weight: 600; font-size: 13px; color: #111; margin-bottom: 4px; }
+  #tooltip .tt-row { display: flex; justify-content: space-between; gap: 16px; color: #555; margin-top: 2px; }
+  #tooltip .tt-val { color: #008B8B; font-weight: 600; }
+  #tooltip .tt-campaign { margin-top: 6px; padding-top: 6px; border-top: 1px solid #eee; font-size: 11px; color: #666; }
+
   #us-map { cursor: grab; display: block; width: 100%; flex: 1; min-height: 0; }
   #us-map:active { cursor: grabbing; }
-  path.state { fill: #e8f0f8; stroke: #fff; stroke-width: 0.6; }
-  circle.dot { cursor: pointer; }
-  circle.dot:hover { fill: #7f2704; opacity: 1; }
+
+  path.state { fill: #e8f0f8; stroke: #fff; stroke-width: 0.8; }
 </style>
 </head>
 <body>
-<h2>Competitor Account Map</h2>
-<p id="sub">Every dot = one account · Scroll to zoom · Drag to pan · Hover for name</p>
+
+<div id="header">
+  <div id="header-left">
+    <h2>BRYCER — Competitor Account Map + LIV Campaign Engagement</h2>
+    <p id="sub">Every dot = one LIV competitor account · Heat = campaign engagement score (opens + clicks) · Scroll to zoom · Hover for details</p>
+  </div>
+  <div id="legend">
+    <div id="legend-title">Map Legend</div>
+    <hr class="legend-divider">
+
+    <div class="legend-section-label">Dots — Competitor Accounts</div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#d95f0e;border:1.5px solid #7f2704;"></div>
+      <span>LIV account — no campaign activity yet</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#008B8B;border:1.5px solid #005f5f;"></div>
+      <span>LIV account — opened &amp; engaged with campaign</span>
+    </div>
+
+    <hr class="legend-divider">
+
+    <div class="legend-section-label">Heat Layer — Engagement Score</div>
+    <div style="font-size:10px;color:#666;margin-bottom:2px;">Score = opens + (clicks × 2). Bigger &amp; brighter = more active.</div>
+    <div class="legend-heat"></div>
+    <div class="heat-labels"><span>Low activity</span><span>High activity</span></div>
+
+    <hr class="legend-divider">
+    <div class="legend-item" style="font-size:10px;color:#888;">
+      💡 Hover any dot for account details
+    </div>
+  </div>
+</div>
+
 <div id="controls">
   <button class="zbtn" id="zin">+</button>
   <button class="zbtn" id="zout">−</button>
   <button class="zbtn" id="zreset" style="width:auto;padding:0 10px;font-size:12px;">Reset</button>
   <span id="zoom-label">Zoom: 1×</span>
 </div>
+
 <svg id="us-map" viewBox="0 0 960 600">
-  <g id="map-g"></g>
+  <defs>
+    <filter id="glow-sm" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+    <filter id="glow-md" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+    <filter id="glow-lg" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="24"/>
+    </filter>
+    <filter id="glow-xl" x="-150%" y="-150%" width="400%" height="400%">
+      <feGaussianBlur stdDeviation="36"/>
+    </filter>
+  </defs>
+  <g id="map-g">
+    <g id="states-g"></g>
+    <g id="heat-g"></g>
+    <g id="dots-g"></g>
+  </g>
 </svg>
 <div id="tooltip"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script>
+
+// ── Competitor accounts (all from original map) ──────────────────────────────
 const accounts = [
   {name:"BRIGHAM CITY FIRE DEPARTMENT",lat:41.5102,lng:-112.0158},
   {name:"Bluffdale Building Department/Bluffdale Metro Fire",lat:40.4894,lng:-111.9385},
@@ -221,58 +301,192 @@ const accounts = [
   {name:"Clinton Fire Department",lat:35.5951,lng:-92.4607},
 ];
 
+// ── Engagement scores from LIV campaign ─────────────────────────────────────
+// Score = contacts_opened + (total_clicks * 2) + contacts_clicked
+const engagement = [
+  {name:"Mooresville Fire & Rescue",          score:74, lat:35.5846, lng:-80.8098, opens:14, clicks:24, bookedDemo:true},
+  {name:"Hickory Fire Dept",                  score:60, lat:35.7326, lng:-81.3412, opens:10, clicks:25, bookedDemo:true},
+  {name:"Crown Point Fire Rescue",            score:48, lat:41.4167, lng:-87.3667, opens:8,  clicks:20, bookedDemo:true},
+  {name:"McDonough Fire Dept",                score:36, lat:33.4473, lng:-84.1477, opens:6,  clicks:15, bookedDemo:true},
+  {name:"Zebulon Fire Department",            score:24, lat:35.8224, lng:-78.3144, opens:4,  clicks:10, bookedDemo:true},
+  {name:"Pocatello Fire Department",          score:20, lat:42.8713, lng:-112.4455,opens:4,  clicks:8,  bookedDemo:true},
+  {name:"Van Wert Fire Dept",                 score:20, lat:40.8687, lng:-84.5835, opens:4,  clicks:8,  bookedDemo:true},
+  {name:"Anson County Fire Marshal Office",   score:12, lat:34.9500, lng:-80.0833, opens:2,  clicks:5,  bookedDemo:true},
+  {name:"Hertford County",                    score:12, lat:36.3500, lng:-76.9833, opens:2,  clicks:5,  bookedDemo:true},
+  {name:"Houston County Fire Dept",           score:12, lat:32.6130, lng:-83.5996, opens:2,  clicks:5,  bookedDemo:true},
+  {name:"Blackfoot Fire Department",          score:12, lat:43.1905, lng:-112.3447,opens:2,  clicks:5,  bookedDemo:true},
+  {name:"Stafford Fire Marshal Office",       score:12, lat:41.9837, lng:-72.2937, opens:2,  clicks:5,  bookedDemo:true},
+  {name:"Martin County",                      score:12, lat:35.8400, lng:-77.1000, opens:2,  clicks:5,  bookedDemo:true},
+  {name:"Richmond Heights Fire Dept",         score:12, lat:41.5567, lng:-81.5007, opens:2,  clicks:5,  bookedDemo:true},
+  {name:"SALT LAKE CITY CORPORATION",         score:8,  lat:40.7608, lng:-111.8910,opens:4,  clicks:2},
+  {name:"East Point Fire Dept",               score:6,  lat:33.6795, lng:-84.4399, opens:2,  clicks:2},
+  {name:"SANDY CITY FIRE DEPARTMENT",         score:5,  lat:40.5649, lng:-111.8389,opens:3,  clicks:1},
+  {name:"Provo Fire & Rescue",                score:4,  lat:40.2338, lng:-111.6585,opens:2,  clicks:1},
+  {name:"LAKE VILLA FIRE PROTECTION DISTRICT",score:4,  lat:42.4167, lng:-88.0833, opens:2,  clicks:1},
+  {name:"Mobile Fire-Rescue Dept",            score:3,  lat:30.6954, lng:-88.0399, opens:2,  clicks:0},
+  {name:"Anchorage Fire Department",          score:3,  lat:61.2181, lng:-149.9003,opens:2,  clicks:0},
+  {name:"ALBERT LEA FIRE RESCUE",             score:3,  lat:43.6480, lng:-93.3683, opens:2,  clicks:0},
+  {name:"Birmingham Fire & Rescue",           score:3,  lat:33.5186, lng:-86.8104, opens:2,  clicks:0},
+  {name:"Gainesville Fire Department",        score:3,  lat:34.2979, lng:-83.8241, opens:2,  clicks:0},
+  {name:"CASPER FIRE-EMS DEPARTMENT",         score:2,  lat:42.8666, lng:-106.3131,opens:2,  clicks:0},
+  {name:"Charlotte Fire Department",          score:1,  lat:35.2271, lng:-80.8431, opens:1,  clicks:0},
+  {name:"Columbus Fire Department",           score:1,  lat:39.9612, lng:-82.9988, opens:1,  clicks:0},
+  {name:"UNIFIED FIRE AUTHORITY",             score:1,  lat:40.7500, lng:-111.9200,opens:1,  clicks:0},
+];
+
+// Score → heat color scale
+const maxScore = 74;
+function heatColor(score) {
+  const t = Math.min(score / maxScore, 1);
+  // yellow → orange → deep red
+  if (t < 0.33) {
+    const tt = t / 0.33;
+    return `rgba(255, ${Math.round(200 - tt * 80)}, 0, ${0.15 + tt * 0.25})`;
+  } else if (t < 0.66) {
+    const tt = (t - 0.33) / 0.33;
+    return `rgba(255, ${Math.round(120 - tt * 80)}, 0, ${0.4 + tt * 0.25})`;
+  } else {
+    const tt = (t - 0.66) / 0.34;
+    return `rgba(${Math.round(255 - tt * 55)}, ${Math.round(40 - tt * 40)}, ${Math.round(tt * 50)}, ${0.65 + tt * 0.25})`;
+  }
+}
+
+function heatRadius(score) {
+  return 18 + (score / maxScore) * 60;
+}
+
+function heatFilter(score) {
+  if (score >= 50) return "url(#glow-xl)";
+  if (score >= 20) return "url(#glow-lg)";
+  if (score >= 10) return "url(#glow-md)";
+  return "url(#glow-sm)";
+}
+
+// ── Build map ────────────────────────────────────────────────────────────────
 const tooltip = document.getElementById("tooltip");
 const zoomLabel = document.getElementById("zoom-label");
+
+// Build engagement lookup by normalized name
+function norm(s) { return s.toLowerCase().replace(/[^a-z0-9]/g,''); }
+const engMap = {};
+engagement.forEach(e => { engMap[norm(e.name)] = e; });
 
 fetch("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json")
   .then(r=>r.json())
   .then(us=>{
     const svg = d3.select("#us-map");
-    const g = d3.select("#map-g");
+    const g   = d3.select("#map-g");
+    const gStates = d3.select("#states-g");
+    const gHeat   = d3.select("#heat-g");
+    const gDots   = d3.select("#dots-g");
+
     const projection = d3.geoAlbersUsa().scale(1280).translate([480,300]);
     const path = d3.geoPath().projection(projection);
     const states = topojson.feature(us, us.objects.states);
 
-    g.selectAll("path.state")
+    gStates.selectAll("path.state")
       .data(states.features)
       .join("path")
       .attr("class","state")
       .attr("d", path);
 
-    g.selectAll("circle.dot")
+    // ── Heat layer (engagement blobs) ─────────────────────────────────────────
+    engagement.forEach(e => {
+      const p = projection([e.lng, e.lat]);
+      if (!p) return;
+      const r  = heatRadius(e.score);
+      const col = heatColor(e.score);
+
+      // Outer soft glow
+      gHeat.append("circle")
+        .attr("cx", p[0]).attr("cy", p[1])
+        .attr("r", r)
+        .attr("fill", col)
+        .attr("filter", heatFilter(e.score))
+        .attr("pointer-events", "none")
+        .attr("class", "heat-blob")
+        .attr("data-score", e.score);
+
+      // Inner brighter core
+      gHeat.append("circle")
+        .attr("cx", p[0]).attr("cy", p[1])
+        .attr("r", r * 0.35)
+        .attr("fill", col.replace(/[\d.]+\)$/, "0.9)"))
+        .attr("pointer-events", "none")
+        .attr("class", "heat-core");
+    });
+
+    // ── Account dots ──────────────────────────────────────────────────────────
+    gDots.selectAll("circle.dot")
       .data(accounts)
       .join("circle")
       .attr("class","dot")
       .attr("cx", d=>{ const p=projection([d.lng,d.lat]); return p?p[0]:-999; })
       .attr("cy", d=>{ const p=projection([d.lng,d.lat]); return p?p[1]:-999; })
-      .attr("r", 5)
-      .attr("fill","#d95f0e")
-      .attr("fill-opacity","0.8")
-      .attr("stroke","#7f2704")
-      .attr("stroke-width","0.8")
-      .on("mousemove", function(event,d){
-        tooltip.innerHTML=`<div class='tt-title'>${d.name}</div>`;
-        tooltip.style.display="block";
-        tooltip.style.left=(event.clientX+14)+"px";
-        tooltip.style.top=(event.clientY+14)+"px";
+      .attr("r", 4.5)
+      .attr("fill", d => {
+        const e = engMap[norm(d.name)];
+        return e && e.score > 0 ? "#008B8B" : "#d95f0e";
       })
-      .on("mouseleave",()=>{ tooltip.style.display="none"; });
+      .attr("fill-opacity", d => {
+        const e = engMap[norm(d.name)];
+        return e && e.score > 0 ? 1 : 0.8;
+      })
+      .attr("stroke", d => {
+        const e = engMap[norm(d.name)];
+        return e && e.score > 0 ? "#005f5f" : "#7f2704";
+      })
+      .attr("stroke-width", d => {
+        const e = engMap[norm(d.name)];
+        return e && e.score >= 20 ? 2 : 1;
+      })
+      .style("cursor","pointer")
+      .on("mousemove", function(event, d) {
+        const e = engMap[norm(d.name)];
+        let html = `<div class='tt-title'>${d.name}</div>`;
+        if (e) {
+          html += `<div class='tt-row'><span>Engagement Score</span><span class='tt-val'>${e.score}</span></div>`;
+          html += `<div class='tt-row'><span>Contacts Opened</span><span class='tt-val'>${e.opens}</span></div>`;
+          html += `<div class='tt-row'><span>Total Clicks</span><span class='tt-val'>${e.clicks}</span></div>`;
+          if (e.bookedDemo) {
+            html += `<div class='tt-campaign'>✅ Clicked "Book a Demo"</div>`;
+          }
+        } else {
+          html += `<div class='tt-campaign' style='margin-top:4px;'>No campaign activity yet</div>`;
+        }
+        tooltip.innerHTML = html;
+        tooltip.style.display = "block";
+        tooltip.style.left = (event.clientX + 14) + "px";
+        tooltip.style.top  = (event.clientY + 14) + "px";
+      })
+      .on("mouseleave", () => { tooltip.style.display = "none"; });
 
+    // ── Zoom ──────────────────────────────────────────────────────────────────
     const zoom = d3.zoom()
       .scaleExtent([1,16])
-      .on("zoom",(event)=>{
+      .on("zoom", (event) => {
         g.attr("transform", event.transform);
         const k = event.transform.k;
-        g.selectAll("circle.dot")
-          .attr("r", 5 / Math.sqrt(k))
-          .attr("stroke-width", 0.8 / k);
-        zoomLabel.textContent=`Zoom: ${Math.round(k*10)/10}×`;
+        gDots.selectAll("circle.dot")
+          .attr("r", 4.5 / Math.sqrt(k))
+          .attr("stroke-width", function() {
+            const base = d3.select(this).attr("stroke-width") > 1 ? 2 : 1;
+            return base / k;
+          });
+        gHeat.selectAll(".heat-blob")
+          .attr("r", function() { return heatRadius(+d3.select(this).attr("data-score")) / Math.sqrt(k); });
+        gHeat.selectAll(".heat-core")
+          .attr("r", function() {
+            const blob = this.previousSibling;
+            return parseFloat(d3.select(blob).attr("r")) * 0.35;
+          });
+        zoomLabel.textContent = `Zoom: ${Math.round(k * 10) / 10}×`;
       });
 
     svg.call(zoom);
-    document.getElementById("zin").onclick=()=>svg.transition().duration(300).call(zoom.scaleBy,2);
-    document.getElementById("zout").onclick=()=>svg.transition().duration(300).call(zoom.scaleBy,0.5);
-    document.getElementById("zreset").onclick=()=>svg.transition().duration(400).call(zoom.transform,d3.zoomIdentity);
+    document.getElementById("zin").onclick    = () => svg.transition().duration(300).call(zoom.scaleBy, 2);
+    document.getElementById("zout").onclick   = () => svg.transition().duration(300).call(zoom.scaleBy, 0.5);
+    document.getElementById("zreset").onclick = () => svg.transition().duration(400).call(zoom.transform, d3.zoomIdentity);
   });
 </script>
 </body>
