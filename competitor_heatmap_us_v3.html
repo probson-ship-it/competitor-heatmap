@@ -44,8 +44,12 @@
   #tooltip .tt-val { color: #008B8B; font-weight: 600; }
   #tooltip .tt-campaign { margin-top: 6px; padding-top: 6px; border-top: 1px solid #eee; font-size: 11px; color: #666; }
 
-  #us-map { cursor: grab; display: block; width: 100%; flex: 1; min-height: 0; }
-  #us-map:active { cursor: grabbing; }
+  .toggle-btn {
+    background: #008B8B; border: 1px solid #005f5f; border-radius: 6px;
+    padding: 0 12px; height: 28px; font-size: 11px; font-weight: 600;
+    cursor: pointer; color: #fff; letter-spacing: 0.02em; transition: background 0.2s;
+  }
+  .toggle-btn.off { background: #f4f4f4; border-color: #ddd; color: #666; }
 
   path.state { fill: #e8f0f8; stroke: #fff; stroke-width: 0.8; }
 </style>
@@ -80,7 +84,7 @@
 
     <hr class="legend-divider">
     <div class="legend-item" style="font-size:10px;color:#888;">
-      💡 Hover any dot for account details
+      Hover any dot for account details
     </div>
   </div>
 </div>
@@ -90,6 +94,7 @@
   <button class="zbtn" id="zout">−</button>
   <button class="zbtn" id="zreset" style="width:auto;padding:0 10px;font-size:12px;">Reset</button>
   <span id="zoom-label">Zoom: 1×</span>
+  <button class="toggle-btn" id="heat-toggle">Hide Engagement Heat</button>
 </div>
 
 <svg id="us-map" viewBox="0 0 960 600">
@@ -449,7 +454,7 @@ fetch("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json")
           html += `<div class='tt-row'><span>Contacts Opened</span><span class='tt-val'>${e.opens}</span></div>`;
           html += `<div class='tt-row'><span>Total Clicks</span><span class='tt-val'>${e.clicks}</span></div>`;
           if (e.bookedDemo) {
-            html += `<div class='tt-campaign'>✅ Clicked "Book a Demo"</div>`;
+            html += `<div class='tt-campaign'>Clicked "Book a Demo"</div>`;
           }
         } else {
           html += `<div class='tt-campaign' style='margin-top:4px;'>No campaign activity yet</div>`;
@@ -487,6 +492,15 @@ fetch("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json")
     document.getElementById("zin").onclick    = () => svg.transition().duration(300).call(zoom.scaleBy, 2);
     document.getElementById("zout").onclick   = () => svg.transition().duration(300).call(zoom.scaleBy, 0.5);
     document.getElementById("zreset").onclick = () => svg.transition().duration(400).call(zoom.transform, d3.zoomIdentity);
+
+    // Heat toggle
+    let heatVisible = true;
+    document.getElementById("heat-toggle").onclick = function() {
+      heatVisible = !heatVisible;
+      d3.select("#heat-g").style("display", heatVisible ? null : "none");
+      this.textContent = heatVisible ? "Hide Engagement Heat" : "Show Engagement Heat";
+      this.classList.toggle("off", !heatVisible);
+    };
   });
 </script>
 </body>
