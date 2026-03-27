@@ -395,6 +395,34 @@ fetch("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json")
       .attr("class","state")
       .attr("d", path);
 
+    // State FIPS → abbreviation lookup
+    const fipsToAbbr = {
+      "01":"AL","02":"AK","04":"AZ","05":"AR","06":"CA","08":"CO","09":"CT",
+      "10":"DE","11":"DC","12":"FL","13":"GA","15":"HI","16":"ID","17":"IL",
+      "18":"IN","19":"IA","20":"KS","21":"KY","22":"LA","23":"ME","24":"MD",
+      "25":"MA","26":"MI","27":"MN","28":"MS","29":"MO","30":"MT","31":"NE",
+      "32":"NV","33":"NH","34":"NJ","35":"NM","36":"NY","37":"NC","38":"ND",
+      "39":"OH","40":"OK","41":"OR","42":"PA","44":"RI","45":"SC","46":"SD",
+      "47":"TN","48":"TX","49":"UT","50":"VT","51":"VA","53":"WA","54":"WV",
+      "55":"WI","56":"WY"
+    };
+
+    // Draw state labels — skip AK and HI (they render off in albers insets, hard to place)
+    const skipStates = new Set(["02","15"]);
+    gStates.selectAll("text.state-label")
+      .data(states.features.filter(d => !skipStates.has(String(d.id).padStart(2,"0"))))
+      .join("text")
+      .attr("class","state-label")
+      .attr("x", d => { const c = path.centroid(d); return c[0]; })
+      .attr("y", d => { const c = path.centroid(d); return c[1] + 4; })
+      .attr("text-anchor","middle")
+      .attr("font-size","8px")
+      .attr("font-family","-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif")
+      .attr("font-weight","600")
+      .attr("fill","#7a91b0")
+      .attr("pointer-events","none")
+      .text(d => fipsToAbbr[String(d.id).padStart(2,"0")] || "");
+
     // ── Heat layer (engagement blobs) ─────────────────────────────────────────
     engagement.forEach(e => {
       const p = projection([e.lng, e.lat]);
@@ -485,6 +513,8 @@ fetch("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json")
             const blob = this.previousSibling;
             return parseFloat(d3.select(blob).attr("r")) * 0.35;
           });
+        gStates.selectAll("text.state-label")
+          .attr("font-size", (8 / k) + "px");
         zoomLabel.textContent = `Zoom: ${Math.round(k * 10) / 10}×`;
       });
 
