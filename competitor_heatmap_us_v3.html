@@ -308,39 +308,46 @@ const accounts = [
 
 // ── Engagement scores from LIV campaign ─────────────────────────────────────
 // Score = contacts_opened + (total_clicks * 2) + contacts_clicked
+// Updated March 30, 2026
 const engagement = [
-  {name:"Mooresville Fire & Rescue",          score:74, lat:35.5846, lng:-80.8098, opens:14, clicks:24, bookedDemo:true},
-  {name:"Hickory Fire Dept",                  score:60, lat:35.7326, lng:-81.3412, opens:10, clicks:25, bookedDemo:true},
-  {name:"Crown Point Fire Rescue",            score:48, lat:41.4167, lng:-87.3667, opens:8,  clicks:20, bookedDemo:true},
-  {name:"McDonough Fire Dept",                score:36, lat:33.4473, lng:-84.1477, opens:6,  clicks:15, bookedDemo:true},
-  {name:"Zebulon Fire Department",            score:24, lat:35.8224, lng:-78.3144, opens:4,  clicks:10, bookedDemo:true},
-  {name:"Pocatello Fire Department",          score:20, lat:42.8713, lng:-112.4455,opens:4,  clicks:8,  bookedDemo:true},
-  {name:"Van Wert Fire Dept",                 score:20, lat:40.8687, lng:-84.5835, opens:4,  clicks:8,  bookedDemo:true},
-  {name:"Anson County Fire Marshal Office",   score:12, lat:34.9500, lng:-80.0833, opens:2,  clicks:5,  bookedDemo:true},
-  {name:"Hertford County",                    score:12, lat:36.3500, lng:-76.9833, opens:2,  clicks:5,  bookedDemo:true},
-  {name:"Houston County Fire Dept",           score:12, lat:32.6130, lng:-83.5996, opens:2,  clicks:5,  bookedDemo:true},
-  {name:"Blackfoot Fire Department",          score:12, lat:43.1905, lng:-112.3447,opens:2,  clicks:5,  bookedDemo:true},
-  {name:"Stafford Fire Marshal Office",       score:12, lat:41.9837, lng:-72.2937, opens:2,  clicks:5,  bookedDemo:true},
-  {name:"Martin County",                      score:12, lat:35.8400, lng:-77.1000, opens:2,  clicks:5,  bookedDemo:true},
-  {name:"Richmond Heights Fire Dept",         score:12, lat:41.5567, lng:-81.5007, opens:2,  clicks:5,  bookedDemo:true},
-  {name:"SALT LAKE CITY CORPORATION",         score:8,  lat:40.7608, lng:-111.8910,opens:4,  clicks:2},
-  {name:"East Point Fire Dept",               score:6,  lat:33.6795, lng:-84.4399, opens:2,  clicks:2},
-  {name:"SANDY CITY FIRE DEPARTMENT",         score:5,  lat:40.5649, lng:-111.8389,opens:3,  clicks:1},
-  {name:"Provo Fire & Rescue",                score:4,  lat:40.2338, lng:-111.6585,opens:2,  clicks:1},
-  {name:"LAKE VILLA FIRE PROTECTION DISTRICT",score:4,  lat:42.4167, lng:-88.0833, opens:2,  clicks:1},
-  {name:"Mobile Fire-Rescue Dept",            score:3,  lat:30.6954, lng:-88.0399, opens:2,  clicks:0},
-  {name:"Anchorage Fire Department",          score:3,  lat:61.2181, lng:-149.9003,opens:2,  clicks:0},
-  {name:"ALBERT LEA FIRE RESCUE",             score:3,  lat:43.6480, lng:-93.3683, opens:2,  clicks:0},
-  {name:"Birmingham Fire & Rescue",           score:3,  lat:33.5186, lng:-86.8104, opens:2,  clicks:0},
-  {name:"Gainesville Fire Department",        score:3,  lat:34.2979, lng:-83.8241, opens:2,  clicks:0},
-  {name:"CASPER FIRE-EMS DEPARTMENT",         score:2,  lat:42.8666, lng:-106.3131,opens:2,  clicks:0},
+  {name:"Mooresville Fire & Rescue",          score:202,lat:35.5846, lng:-80.8098, opens:11, clicks:90, bookedDemo:true},
+  {name:"Hickory Fire Dept",                  score:84, lat:35.7326, lng:-81.3412, opens:7,  clicks:35, bookedDemo:true},
+  {name:"Crown Point Fire Rescue",            score:60, lat:41.4167, lng:-87.3667, opens:5,  clicks:25, bookedDemo:true},
+  {name:"Hertford County",                    score:48, lat:36.3500, lng:-76.9833, opens:4,  clicks:20, bookedDemo:true},
+  {name:"McDonough Fire Dept",                score:48, lat:33.4473, lng:-84.1477, opens:4,  clicks:20, bookedDemo:true},
+  {name:"Zebulon Fire Department",            score:36, lat:35.8224, lng:-78.3144, opens:3,  clicks:15, bookedDemo:true},
+  {name:"Martin County",                      score:24, lat:35.8400, lng:-77.1000, opens:2,  clicks:10, bookedDemo:true},
+  {name:"Stafford Fire Marshal Office",       score:24, lat:41.9837, lng:-72.2937, opens:2,  clicks:10, bookedDemo:true},
+  {name:"Pocatello Fire Department",          score:20, lat:42.8713, lng:-112.4455,opens:1,  clicks:9,  bookedDemo:true},
+  {name:"Van Wert Fire Dept",                 score:20, lat:40.8687, lng:-84.5835, opens:1,  clicks:9,  bookedDemo:true},
+  {name:"SALT LAKE CITY CORPORATION",         score:20, lat:40.7608, lng:-111.8910,opens:20, clicks:0},
+  {name:"Richmond Heights Fire Dept",         score:12, lat:41.5567, lng:-81.5007, opens:1,  clicks:5,  bookedDemo:true},
+  {name:"Houston County Fire Dept",           score:12, lat:32.6130, lng:-83.5996, opens:1,  clicks:5,  bookedDemo:true},
+  {name:"Blackfoot Fire Department",          score:12, lat:43.1905, lng:-112.3447,opens:1,  clicks:5,  bookedDemo:true},
+  {name:"Anson County Fire Marshal Office",   score:12, lat:34.9500, lng:-80.0833, opens:1,  clicks:5,  bookedDemo:true},
+  {name:"East Point Fire Dept",               score:9,  lat:33.6795, lng:-84.4399, opens:9,  clicks:0},
+  {name:"Provo Fire & Rescue",                score:7,  lat:40.2338, lng:-111.6585,opens:7,  clicks:0},
+  {name:"SANDY CITY FIRE DEPARTMENT",         score:7,  lat:40.5649, lng:-111.8389,opens:7,  clicks:0},
+  {name:"Anchorage Fire Department",          score:5,  lat:61.2181, lng:-149.9003,opens:5,  clicks:0},
+  {name:"High Point Fire Dept",               score:4,  lat:35.9557, lng:-80.0053, opens:4,  clicks:0},
+  {name:"LAKE VILLA FIRE PROTECTION DISTRICT",score:4,  lat:42.4167, lng:-88.0833, opens:4,  clicks:0},
+  {name:"Birmingham Fire & Rescue",           score:4,  lat:33.5186, lng:-86.8104, opens:4,  clicks:0},
+  {name:"Sheridan Fire-Rescue",               score:4,  lat:44.7972, lng:-106.9561,opens:4,  clicks:0},
+  {name:"Lancaster Fire Department",          score:4,  lat:32.5921, lng:-96.7561, opens:4,  clicks:0},
+  {name:"Morrisville Fire Rescue",            score:4,  lat:35.8235, lng:-78.8253, opens:4,  clicks:0},
+  {name:"WEST VALLEY CITY FIRE DEPARTMENT",   score:4,  lat:40.6916, lng:-112.0010,opens:4,  clicks:0},
+  {name:"Washington City Fire Department",    score:4,  lat:37.1300, lng:-113.5100,opens:4,  clicks:0},
+  {name:"Mobile Fire-Rescue Dept",            score:4,  lat:30.6954, lng:-88.0399, opens:4,  clicks:0},
+  {name:"ALBERT LEA FIRE RESCUE",             score:3,  lat:43.6480, lng:-93.3683, opens:3,  clicks:0},
+  {name:"Gainesville Fire Department",        score:3,  lat:34.2979, lng:-83.8241, opens:3,  clicks:0},
+  {name:"CASPER FIRE-EMS DEPARTMENT",         score:3,  lat:42.8666, lng:-106.3131,opens:3,  clicks:0},
   {name:"Charlotte Fire Department",          score:1,  lat:35.2271, lng:-80.8431, opens:1,  clicks:0},
   {name:"Columbus Fire Department",           score:1,  lat:39.9612, lng:-82.9988, opens:1,  clicks:0},
   {name:"UNIFIED FIRE AUTHORITY",             score:1,  lat:40.7500, lng:-111.9200,opens:1,  clicks:0},
 ];
 
 // Score → heat color scale
-const maxScore = 74;
+const maxScore = 202;
 function heatColor(score) {
   const t = Math.min(score / maxScore, 1);
   // yellow → orange → deep red
